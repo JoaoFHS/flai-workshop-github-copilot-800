@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, TeamViewSet, ActivityViewSet, LeaderboardViewSet, WorkoutViewSet, api_root
+import os
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -25,8 +27,31 @@ router.register(r'activities', ActivityViewSet)
 router.register(r'leaderboard', LeaderboardViewSet)
 router.register(r'workouts', WorkoutViewSet)
 
+def api_endpoints(request):
+    """
+    Returns the base URL for API endpoints based on environment (codespace or localhost).
+    """
+    codespace_name = os.getenv('CODESPACE_NAME')
+    if codespace_name:
+        base_url = f"https://{codespace_name}-8000.app.github.dev"
+    else:
+        base_url = "http://localhost:8000"
+    
+    return JsonResponse({
+        'base_url': base_url,
+        'endpoints': {
+            'api_root': f"{base_url}/api/",
+            'users': f"{base_url}/api/users/",
+            'teams': f"{base_url}/api/teams/",
+            'activities': f"{base_url}/api/activities/",
+            'leaderboard': f"{base_url}/api/leaderboard/",
+            'workouts': f"{base_url}/api/workouts/",
+        }
+    })
+
 urlpatterns = [
     path('', api_root, name='api-root'),
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api-endpoints/', api_endpoints, name='api-endpoints'),
 ]
